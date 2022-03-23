@@ -4,8 +4,8 @@
     "description": "",
     "scripts": {
         "dev": "npm run start",
-        "start": "webpack-dev-server --config ./config/webpack.config.js --mode development",
-        "build": "webpack --config ./config/webpack.config.js --mode production",
+        "start": "webpack-dev-server --config ./config/webpack.config.js --env development",
+        "build": "webpack --config ./config/webpack.config.js --env production",
         "dist:clean": "rimraf dist",
         "node_modules:clean": "rimraf node_modules"
     },
