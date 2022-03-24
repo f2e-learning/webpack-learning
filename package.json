@@ -11,7 +11,10 @@
         "commit": "git cz",
         "release": "standard-version",
         "release:alpha": "standard-version --prerelease alpha",
-        "release:rc": "standard-version --prerelease rc"
+        "release:rc": "standard-version --prerelease rc",
+        "release:major": "npm run release -- --release-as major",
+        "release:minor": "npm run release -- --release-as minor",
+        "release:patch": "npm run release -- --release-as patch"
     },
     "author": "",
     "license": "ISC",
