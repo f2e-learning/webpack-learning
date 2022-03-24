@@ -5,6 +5,7 @@
  */
 const path = require('path');
 const chalk = require("chalk");
+const webpack = require("webpack");
 
 // merge配置合并
 const { merge } = require('webpack-merge');
@@ -18,6 +19,12 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 // css打包提取为单独文件
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
+// 友好的进度条
+const WebpackBar = require('webpackbar');
+
+// 用于将静态文件拷贝到你的输出目录下，有时一些文件并没有适用的 loader 或者是不需要经过处理，原样复制的文件。
+const CopyWebpackPlugin = require("copy-webpack-plugin");
+
 const { name, version } = require("../package");
 
 // dev配置
@@ -29,6 +36,7 @@ module.exports = (env) => {
 
     console.log(chalk.blue('Environment:'), chalk.yellowBright(env));
     console.log(chalk.blue('Version:'), chalk.yellowBright(version));
+    const devMode = env === 'development';
 
     // 基本配置
     const baseConfig = {
@@ -39,7 +47,7 @@ module.exports = (env) => {
 
         // 多入口需要如下键值对形式
         entry: {
-            app: path.resolve(__dirname, '../src/app.js'),
+            app: ['babel-polyfill', path.resolve(__dirname, '../src/app.js')],
         },
 
         /*--------------*/
@@ -51,6 +59,7 @@ module.exports = (env) => {
             path: path.resolve(__dirname, '../dist'),
             // 打包后的文件名，默认打包出来是main.js
             filename: 'js/[name].[contenthash:6].js',
+            publicPath: '/',
             // publicPath: 'https://cloud-app.com.cn/app/',
         },
         module: {
@@ -64,7 +73,11 @@ module.exports = (env) => {
                 {
                     test: /\.css/,
                     use: [
-                        MiniCssExtractPlugin.loader, // 提取css为一个文件
+                        /**
+                         * MiniCssExtractPlugin提取css为一个文件，MiniCssExtractPlugin没有hdr，
+                         * 所以开发使用style-loader
+                         */
+                        devMode ?  'style-loader' : MiniCssExtractPlugin.loader,
                         // 'style-loader', // 将css文件打包到js
                         'css-loader', // css文件处理
                     ]
@@ -72,7 +85,11 @@ module.exports = (env) => {
                 {
                     test: /\.less/,
                     use: [
-                        MiniCssExtractPlugin.loader, // 提取css为一个文件
+                        /**
+                         * MiniCssExtractPlugin提取css为一个文件，MiniCssExtractPlugin没有hdr，
+                         * 所以开发使用style-loader
+                         */
+                        devMode ?  'style-loader' : MiniCssExtractPlugin.loader,
                         // 'style-loader', // 将css文件打包到js
                         'css-loader', // css文件处理
                         'less-loader', // less编译
@@ -125,6 +142,11 @@ module.exports = (env) => {
         plugins: [
             // 清除上次打包的代码
             new CleanWebpackPlugin(),
+            // new webpack.ProgressPlugin(),
+            new WebpackBar({
+                name: name || 'WebPack',
+                color: '#61dafb', // react 蓝
+            }),
             // 默认会压缩html，
             new HtmlWebpackPlugin({
                 title: 'app',
@@ -133,8 +155,17 @@ module.exports = (env) => {
                 inject: true,
                 minify: false,
             }),
+            // 提取css文件
             new MiniCssExtractPlugin({
                 filename: 'css/[name].[contenthash:6].css',
+            }),
+            new CopyWebpackPlugin({
+                patterns: [
+                    {
+                        from: path.resolve(__dirname, "../public/index.html"),
+                        to: path.resolve(__dirname, "../dist")
+                    },
+                ],
             }),
         ]
     }
