@@ -5,10 +5,6 @@
  */
 import './css/index.css';
 import './css/app.less';
+import { App } from './js/main';
 
-(function () {
-    document.getElementById('app').innerHTML = 'Webpack App';
-    let a = 1;
-    a = a + 1;
-    console.log(a);
-})();
+new App();

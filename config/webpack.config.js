@@ -16,11 +16,21 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 // Html编译
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
+// CDN提取
+const WebpackCdnPlugin = require('webpack-cdn-plugin');
+
 // css打包提取为单独文件
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
+// script 属性修改
+const ScriptExtHtmlWebpackPlugin = require('script-ext-html-webpack-plugin');
+
+
 // 友好的进度条
 const WebpackBar = require('webpackbar');
+
+// 打包分析
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 // 用于将静态文件拷贝到你的输出目录下，有时一些文件并没有适用的 loader 或者是不需要经过处理，原样复制的文件。
 const CopyWebpackPlugin = require("copy-webpack-plugin");
@@ -32,11 +42,45 @@ const devConfig = require('./webpack.dev');
 // prod配置
 const prodConfig = require('./webpack.prod');
 
+// 拼接路径
+const resolve = dir => path.join(__dirname, dir);
+
 module.exports = (env) => {
 
     console.log(chalk.blue('Environment:'), chalk.yellowBright(env));
     console.log(chalk.blue('Version:'), chalk.yellowBright(version));
     const devMode = env === 'development';
+
+    const cdnLoader = (prod = false) => {
+        return {
+            modules: [
+                {
+                    name: 'axios',
+                    var: 'axios',
+                    path: 'axios.min.js'
+                },
+                {
+                    name: 'vue',
+                    var: 'Vue',
+                    path: 'vue.runtime.min.js'
+                },
+                {
+                    name: 'vue-router',
+                    var: 'VueRouter',
+                    path: 'vue-router.min.js'
+                }
+                // {
+                //   name: 'view-design',
+                //   var: 'iview',
+                //   path: 'iview.min.js'
+                // }
+            ],
+            prod,
+            publicPath: '/node_modules',
+            prodUrl: '//cdn.staticfile.org/:name/:version/:path'
+            // prodUrl: 'https://cdn.jsdelivr.net/npm/:name@:version/dist/:path'
+        }
+    }
 
     // 基本配置
     const baseConfig = {
@@ -47,7 +91,7 @@ module.exports = (env) => {
 
         // 多入口需要如下键值对形式
         entry: {
-            app: ['babel-polyfill', path.resolve(__dirname, '../src/app.js')],
+            app: ['babel-polyfill', resolve('../src/app.js')],
         },
 
         /*--------------*/
@@ -56,10 +100,9 @@ module.exports = (env) => {
          */
         output: {
             // 打包后的路径
-            path: path.resolve(__dirname, '../dist'),
+            path: resolve('../dist'),
             // 打包后的文件名，默认打包出来是main.js
             filename: 'js/[name].[contenthash:6].js',
-            publicPath: '/',
             // publicPath: 'https://cloud-app.com.cn/app/',
         },
         module: {
@@ -68,10 +111,12 @@ module.exports = (env) => {
                     test: /\.js$/, // 检测js文件
                     use: {
                         loader: 'babel-loader', // 使用babel-loader
-                    }
+                    },
+                    include: [resolve('src')],
+                    exclude: [resolve('node_modules')]
                 },
                 {
-                    test: /\.css/,
+                    test: /\.css$/,
                     use: [
                         /**
                          * MiniCssExtractPlugin提取css为一个文件，MiniCssExtractPlugin没有hdr，
@@ -80,18 +125,42 @@ module.exports = (env) => {
                         devMode ?  'style-loader' : MiniCssExtractPlugin.loader,
                         // 'style-loader', // 将css文件打包到js
                         'css-loader', // css文件处理
+                        // css兼容性处理，添加前缀
+                        {
+                            loader: 'postcss-loader',
+                            options: {
+                                plugins: function () {
+                                    return [
+                                        require('precss'),
+                                        require('autoprefixer')
+                                    ];
+                                }
+                            }
+                        },
                     ]
                 },
                 {
-                    test: /\.less/,
+                    test: /\.less$/,
                     use: [
                         /**
                          * MiniCssExtractPlugin提取css为一个文件，MiniCssExtractPlugin没有hdr，
                          * 所以开发使用style-loader
                          */
-                        devMode ?  'style-loader' : MiniCssExtractPlugin.loader,
+                        devMode ? 'style-loader' : MiniCssExtractPlugin.loader,
                         // 'style-loader', // 将css文件打包到js
                         'css-loader', // css文件处理
+                        // css兼容性处理，添加前缀
+                        {
+                            loader: 'postcss-loader',
+                            options: {
+                                plugins: function () {
+                                    return [
+                                        require('precss'),
+                                        require('autoprefixer')
+                                    ];
+                                }
+                            }
+                        },
                         'less-loader', // less编译
                     ]
                 },
@@ -140,9 +209,14 @@ module.exports = (env) => {
             ]
         },
         plugins: [
+            new BundleAnalyzerPlugin({
+                openAnalyzer: false,
+                analyzerMode: 'static',
+                reportFilename: 'report.html'
+            }),
             // 清除上次打包的代码
             new CleanWebpackPlugin(),
-            // new webpack.ProgressPlugin(),
+            // new webpack.ProgressPlugin(), // 打包进度
             new WebpackBar({
                 name: name || 'WebPack',
                 color: '#61dafb', // react 蓝
@@ -150,24 +224,66 @@ module.exports = (env) => {
             // 默认会压缩html，
             new HtmlWebpackPlugin({
                 title: 'app',
-                template: path.resolve(__dirname, '../public/index.html'),
+                template: resolve('../public/index.html'),
                 filename: 'index.html',
                 inject: true,
                 minify: false,
             }),
+            new WebpackCdnPlugin(cdnLoader(true)),
             // 提取css文件
             new MiniCssExtractPlugin({
                 filename: 'css/[name].[contenthash:6].css',
             }),
-            new CopyWebpackPlugin({
-                patterns: [
-                    {
-                        from: path.resolve(__dirname, "../public/index.html"),
-                        to: path.resolve(__dirname, "../dist")
-                    },
-                ],
+            new ScriptExtHtmlWebpackPlugin({
+                custom: {
+                    test: /\.js$/,
+                    attribute: 'charset',
+                    value: 'utf-8',
+                },
             }),
-        ]
+            // new CopyWebpackPlugin({
+            //     patterns: [
+            //         {
+            //             from: path.resolve(__dirname, "../public/index.html"),
+            //             to: path.resolve(__dirname, "../dist")
+            //         },
+            //     ],
+            // }),
+        ],
+        optimization: {
+            // 开启代码压缩，mode为production默认开启代码压缩和TreeShaking
+            // minimize: true,
+            // 代码分割
+            splitChunks: {
+                name: true,
+                chunks: 'all',
+                minSize: 10000, // 大于10kb，再去提取
+                // 指定需要打包哪些内容
+                cacheGroups: {
+                    vendor: {
+                        // 第三方包
+                        test: /[\\/]node_modules[\\/]/,
+                        chunks: 'initial',
+                        enforce: true,
+                        priority: 10,
+                        name: 'vendor'
+                    },
+                    // common: {
+                    //     // 公共资源的打包
+                    //     chunks: "all",
+                    //     minChunks: 2,
+                    //     name: 'common',
+                    //     enforce: true,
+                    //     priority: 5
+                    // }
+                },
+            },
+            // 运行时，webpack配置文件
+            // runtimeChunk: true,
+            runtimeChunk: {
+                "name": "manifest"
+            },
+        },
     }
 
     return merge(baseConfig, {

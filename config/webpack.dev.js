@@ -17,6 +17,9 @@ const server_port = 10010;
 
 module.exports = {
     mode: 'development',
+    stats: {
+        all: false,
+    },
     //use inline-source-map for development:
     devtool: "inline-source-map",
     output: {
