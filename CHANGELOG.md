@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.0.0](https://github.com/f2e-learning/webpack-learning/compare/v2.0.0...v3.0.0) (2022-04-03)
+
+
+### Features
+
+* update yarn.lock ([accb0af](https://github.com/f2e-learning/webpack-learning/commit/accb0af92902b97cd4a344c4e18597d417262774))
+* 一个完整的webpack配置 ([1449d79](https://github.com/f2e-learning/webpack-learning/commit/1449d79b160b3d6d47603cf7c9d71d29e096365b))
+
 ## 2.0.0 (2022-03-24)
 
 
