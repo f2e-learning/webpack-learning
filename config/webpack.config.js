@@ -101,6 +101,7 @@ module.exports = (env) => {
         output: {
             // 打包后的路径
             path: resolve('../dist'),
+            // chunkFilename: 'js/[name].[contenthash:6].js',
             // 打包后的文件名，默认打包出来是main.js
             filename: 'js/[name].[contenthash:6].js',
             // publicPath: 'https://cloud-app.com.cn/app/',
@@ -227,7 +228,19 @@ module.exports = (env) => {
                 template: resolve('../public/index.html'),
                 filename: 'index.html',
                 inject: true,
-                minify: false,
+                minify: devMode ? false : {
+                    collapseWhitespace: true,
+                    collapseBooleanAttributes: true,
+                    collapseInlineTagWhitespace: true,
+                    removeComments: true,
+                    removeRedundantAttributes: true,
+                    removeScriptTypeAttributes: true,
+                    removeStyleLinkTypeAttributes: true,
+                    minifyCSS: true,
+                    minifyJS: true,
+                    minifyURLs: true,
+                    useShortDoctype: true,
+                }
             }),
             new WebpackCdnPlugin(cdnLoader(true)),
             // 提取css文件
