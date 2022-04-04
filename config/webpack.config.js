@@ -10,9 +10,6 @@ const webpack = require("webpack");
 // merge配置合并
 const { merge } = require('webpack-merge');
 
-// 在每次 build 后移除你的dist目录（可配置），默认情况下它会读取 webpack 配置的output.path。
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
-
 // Html编译
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
@@ -101,10 +98,10 @@ module.exports = (env) => {
         output: {
             // 打包后的路径
             path: resolve('../dist'),
-            // chunkFilename: 'js/[name].[contenthash:6].js',
+            chunkFilename: 'js/[name].[chunkhash:6].js',
             // 打包后的文件名，默认打包出来是main.js
-            filename: 'js/[name].[contenthash:6].js',
-            // publicPath: 'https://cloud-app.com.cn/app/',
+            filename: 'js/[name].[chunkhash:6].js',
+            // publicPath: '',
         },
         module: {
             rules: [
@@ -175,7 +172,7 @@ module.exports = (env) => {
                                 publicPath: '../img/',
                                 // 压缩之后的图片如果小于10KB，那么将直接转为Base64编码，否则通过URL的形式连接图片;
                                 limit: 10 * 1024, // 默认转为Base64编码
-                                name: '[name].[contenthash:6].[ext]',
+                                name: '[name].[hash:6].[ext]',
                             },
                         },
                         /**
@@ -215,8 +212,6 @@ module.exports = (env) => {
                 analyzerMode: 'static',
                 reportFilename: 'report.html'
             }),
-            // 清除上次打包的代码
-            new CleanWebpackPlugin(),
             // new webpack.ProgressPlugin(), // 打包进度
             new WebpackBar({
                 name: name || 'WebPack',
@@ -254,13 +249,13 @@ module.exports = (env) => {
                     value: 'utf-8',
                 },
             }),
-            // new CopyWebpackPlugin({
-            //     patterns: [
-            //         {
-            //             from: path.resolve(__dirname, "../public/index.html"),
-            //             to: path.resolve(__dirname, "../dist")
-            //         },
-            //     ],
+            new webpack.NamedChunksPlugin(),
+            new webpack.NamedModulesPlugin(), // HMR shows correct file names in console on update.
+            new webpack.NoEmitOnErrorsPlugin(),
+            new webpack.HashedModuleIdsPlugin(),
+            // new webpack.DllReferencePlugin({
+            //     manifest: require(resolve('../static/dll/lodash.manifest.json')), // manifest的位置
+            //     context: __dirname,
             // }),
         ],
         optimization: {
@@ -269,7 +264,7 @@ module.exports = (env) => {
             // 代码分割
             splitChunks: {
                 name: true,
-                chunks: 'all',
+                chunks: 'all', // 表示对所有的第三方库进行代码分割(包括async和initial)
                 minSize: 10000, // 大于10kb，再去提取
                 // 指定需要打包哪些内容
                 cacheGroups: {
@@ -284,10 +279,10 @@ module.exports = (env) => {
                     // common: {
                     //     // 公共资源的打包
                     //     chunks: "all",
-                    //     minChunks: 2,
+                    //     minChunks: 2, // 表示被引用次数大于等于2的module符合该cacheGroup的条件
                     //     name: 'common',
                     //     enforce: true,
-                    //     priority: 5
+                    //     priority: 5, // 表示优先处理，webpack默认的两个cacheGroup的优先级为负数。
                     // }
                 },
             },

@@ -4,8 +4,9 @@
  * @Description: webpack.prod
  */
 const path = require('path');
-// 友好的错误提示
-const FriendlyErrorsWebpackPlugin = require('friendly-errors-webpack-plugin');
+
+// 在每次 build 后移除你的dist目录（可配置），默认情况下它会读取 webpack 配置的output.path。
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
 module.exports = {
     mode: 'production',
@@ -21,10 +22,7 @@ module.exports = {
         assets: true,
     },
     plugins:[
-        new FriendlyErrorsWebpackPlugin({
-            compilationSuccessInfo: {
-                messages: [`Build Complete`],
-            }
-        }),
+        // 清除上次打包的代码
+        new CleanWebpackPlugin(),
     ],
 }

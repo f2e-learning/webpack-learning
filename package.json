@@ -1,11 +1,12 @@
 {
     "name": "webpack-learning",
     "version": "3.0.0",
-    "description": "",
+    "description": "webpack-learning\"",
     "scripts": {
         "dev": "npm run start",
         "start": "webpack-dev-server --config ./config/webpack.config.js --env development",
         "build": "webpack --config ./config/webpack.config.js --env production",
+        "dll": "webpack --config ./config/webpack.dll.js",
         "dist:clean": "rimraf dist",
         "node_modules:clean": "rimraf node_modules",
         "commit": "git cz",
