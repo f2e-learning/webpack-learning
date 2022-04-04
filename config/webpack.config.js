@@ -217,6 +217,15 @@ module.exports = (env) => {
                 name: name || 'WebPack',
                 color: '#61dafb', // react 蓝
             }),
+            // 资源拷贝
+            new CopyWebpackPlugin({
+                patterns: [
+                    {
+                        from: path.resolve(__dirname, "../public"),
+                        to: path.resolve(__dirname, "../dist")
+                    },
+                ],
+            }),
             // 默认会压缩html，
             new HtmlWebpackPlugin({
                 title: 'app',
@@ -250,8 +259,9 @@ module.exports = (env) => {
                 },
             }),
             new webpack.NamedChunksPlugin(),
-            new webpack.NamedModulesPlugin(), // HMR shows correct file names in console on update.
-            new webpack.NoEmitOnErrorsPlugin(),
+            // HMR shows correct file names in console on update.
+            new webpack.NamedModulesPlugin(),
+            // 固定moduleId
             new webpack.HashedModuleIdsPlugin(),
             // new webpack.DllReferencePlugin({
             //     manifest: require(resolve('../static/dll/lodash.manifest.json')), // manifest的位置

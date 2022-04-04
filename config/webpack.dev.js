@@ -50,7 +50,11 @@ module.exports = {
         }
     },
     plugins:[
+        // 热加载
         new webpack.HotModuleReplacementPlugin(),
+        // 屏蔽一些编译错误
+        new webpack.NoEmitOnErrorsPlugin(),
+        // 友好的错误输出
         new FriendlyErrorsWebpackPlugin({
             compilationSuccessInfo: {
                 messages: [`App running at:\n- Local:   http://localhost:${server_port}\n- Network: http://${ip.address()}:${server_port}`],
