@@ -22,12 +22,8 @@ const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 // script 属性修改
 const ScriptExtHtmlWebpackPlugin = require('script-ext-html-webpack-plugin');
 
-
 // 友好的进度条
 const WebpackBar = require('webpackbar');
-
-// 打包分析
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 // 用于将静态文件拷贝到你的输出目录下，有时一些文件并没有适用的 loader 或者是不需要经过处理，原样复制的文件。
 const CopyWebpackPlugin = require("copy-webpack-plugin");
@@ -101,10 +97,16 @@ module.exports = (env) => {
             chunkFilename: 'js/[name].[chunkhash:6].js',
             // 打包后的文件名，默认打包出来是main.js
             filename: 'js/[name].[chunkhash:6].js',
-            // publicPath: '',
+            publicPath: devMode ? `` : `https://forguo.cn/app/`,
         },
         module: {
             rules: [
+                {
+                    test: /\.ws$/, // 检测ws文件
+                    use: {
+                        loader: "loader/ws-loader", // 使用自定义loader，ws-loader
+                    }
+                },
                 {
                     test: /\.js$/, // 检测js文件
                     use: {
@@ -207,24 +209,38 @@ module.exports = (env) => {
             ]
         },
         plugins: [
-            new BundleAnalyzerPlugin({
-                openAnalyzer: false,
-                analyzerMode: 'static',
-                reportFilename: 'report.html'
-            }),
             // new webpack.ProgressPlugin(), // 打包进度
             new WebpackBar({
                 name: name || 'WebPack',
                 color: '#61dafb', // react 蓝
             }),
+            new webpack.NamedChunksPlugin(),
+            // HMR shows correct file names in console on update.
+            new webpack.NamedModulesPlugin(),
+            // 固定moduleId
+            new webpack.HashedModuleIdsPlugin(),
             // 资源拷贝
             new CopyWebpackPlugin({
                 patterns: [
                     {
-                        from: path.resolve(__dirname, "../public"),
-                        to: path.resolve(__dirname, "../dist")
+                        from: resolve("../public"),
+                        to: resolve( "../dist")
                     },
                 ],
+            }),
+            // cdn抽离
+            new WebpackCdnPlugin(cdnLoader(true)),
+            // script标签utf-8编码修复
+            new ScriptExtHtmlWebpackPlugin({
+                custom: {
+                    test: /\.js$/,
+                    attribute: 'charset',
+                    value: 'utf-8',
+                },
+            }),
+            // 提取css文件
+            new MiniCssExtractPlugin({
+                filename: 'css/[name].[contenthash:6].css',
             }),
             // 默认会压缩html，
             new HtmlWebpackPlugin({
@@ -232,6 +248,7 @@ module.exports = (env) => {
                 template: resolve('../public/index.html'),
                 filename: 'index.html',
                 inject: true,
+                chunksSortMode: 'none',
                 minify: devMode ? false : {
                     collapseWhitespace: true,
                     collapseBooleanAttributes: true,
@@ -246,27 +263,6 @@ module.exports = (env) => {
                     useShortDoctype: true,
                 }
             }),
-            new WebpackCdnPlugin(cdnLoader(true)),
-            // 提取css文件
-            new MiniCssExtractPlugin({
-                filename: 'css/[name].[contenthash:6].css',
-            }),
-            new ScriptExtHtmlWebpackPlugin({
-                custom: {
-                    test: /\.js$/,
-                    attribute: 'charset',
-                    value: 'utf-8',
-                },
-            }),
-            new webpack.NamedChunksPlugin(),
-            // HMR shows correct file names in console on update.
-            new webpack.NamedModulesPlugin(),
-            // 固定moduleId
-            new webpack.HashedModuleIdsPlugin(),
-            // new webpack.DllReferencePlugin({
-            //     manifest: require(resolve('../static/dll/lodash.manifest.json')), // manifest的位置
-            //     context: __dirname,
-            // }),
         ],
         optimization: {
             // 开启代码压缩，mode为production默认开启代码压缩和TreeShaking

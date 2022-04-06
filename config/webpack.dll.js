@@ -21,6 +21,7 @@ module.exports = {
     output: {
         // 打包后的路径
         path: resolve('../static/dll'),
+        // chunkFilename: '[name].js',
         filename: '[name].js',
         library: '[name]', // 引用名
     },
@@ -28,7 +29,7 @@ module.exports = {
         // 清除上次打包的代码
         new CleanWebpackPlugin(),
         new webpack.DllPlugin({
-            path: resolve('../static/dll/[name].manifest.json'),
+            path: resolve('../static/[name].manifest.json'),
             name: '[name]',
             context: __dirname,
         })
